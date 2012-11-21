@@ -1,0 +1,12 @@
+diff -aurN openssl-1.0.1c.orig/Makefile openssl-1.0.1c/Makefile
+--- openssl-1.0.1c.orig/Makefile	2012-07-26 22:23:05.040308621 +0200
++++ openssl-1.0.1c/Makefile	2012-07-26 22:26:29.137308607 +0200
+@@ -206,7 +206,7 @@
+ 
+ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
+ 		CC='$(CC)' CFLAG='$(CFLAG)' 			\
+-		AS='$(CC)' ASFLAG='$(CFLAG) -c'			\
++		AS='$(CC)' ASFLAG='$(ASFLAG)'			\
+ 		AR='$(AR)' NM='$(NM)' RANLIB='$(RANLIB)'	\
+ 		CROSS_COMPILE='$(CROSS_COMPILE)'	\
+ 		PERL='$(PERL)' ENGDIRS='$(ENGDIRS)'		\
