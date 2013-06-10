@@ -3,7 +3,7 @@
 Summary:	OpenSSL Toolkit libraries for the "Secure Sockets Layer" (SSL v2/v3)
 Name:		openssl
 Version:	1.0.1e
-Release:	2
+Release:	3
 License:	Apache-like
 Group:		Libraries
 Source0:	ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
@@ -67,11 +67,6 @@ Development part of OpenSSL library.
 %patch1 -p1
 %patch2 -p1
 
-# -O3 is causing massive slowdown
-# -O3: Doing md2 for 3s on 16 size blocks: 391064 md2's in 2.99s
-# -O2: Doing md2 for 3s on 16 size blocks: 593651 md2's in 2.99s
-sed -i "s/-O3//g" Configure
-
 %{__perl} -pi -e 's#%{_prefix}/local/bin/perl#%{__perl}#g' \
 	`grep -l -r "%{_prefix}/local/bin/perl" *`
 
@@ -90,6 +85,7 @@ touch Makefile.*
 %endif
 %ifarch %{x8664}
 	linux-x86_64				\
+	enable-ec_nistp_64_gcc_128		\
 %endif
 	%{rpmcflags} %{rpmldflags} -DOPENSSL_NO_TLS1_2_CLIENT
 
