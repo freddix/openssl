@@ -2,12 +2,12 @@
 
 Summary:	OpenSSL Toolkit libraries for the "Secure Sockets Layer" (SSL v2/v3)
 Name:		openssl
-Version:	1.0.1f
+Version:	1.0.1g
 Release:	1
 License:	Apache-like
 Group:		Libraries
 Source0:	ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
-# Source0-md5:	f26b09c028a0541cab33da697d522b25
+# Source0-md5:	de62b43dfcd858e66a74bee1c834e959
 Patch0:		%{name}-include.patch
 Patch1:		%{name}-ca-certificates.patch
 Patch2:		%{name}-ldflags.patch
