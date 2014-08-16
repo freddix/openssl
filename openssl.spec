@@ -1,23 +1,23 @@
 %include	/usr/lib/rpm/macros.perl
 
-Summary:	OpenSSL Toolkit libraries for the "Secure Sockets Layer" (SSL v2/v3)
+Summary:	OpenSSL Toolkit for Secure Sockets Layer and Transport Layer Security
 Name:		openssl
-Version:	1.0.1g
+Version:	1.0.1i
 Release:	1
 License:	Apache-like
 Group:		Libraries
 Source0:	ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
-# Source0-md5:	de62b43dfcd858e66a74bee1c834e959
+# Source0-md5:	c8dc151a671b9b92ff3e4c118b174972
 Patch0:		%{name}-include.patch
-Patch1:		%{name}-ca-certificates.patch
-Patch2:		%{name}-ldflags.patch
-Patch3:		%{name}-fips_install.patch
+Patch1:		%{name}-ldflags.patch
 URL:		http://www.openssl.org/
 BuildRequires:	perl-devel
 BuildRequires:	rpm-perlprov
 BuildRequires:	sed
 Requires:	ca-certificates
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+
+%define		specflags   -Wa,--noexecstack
 
 %description
 The OpenSSL Project is a collaborative effort to develop a robust,
@@ -27,15 +27,6 @@ v1) protocols with full-strength cryptography world-wide. The project
 is managed by a worldwide community of volunteers that use the
 Internet to communicate, plan, and develop the OpenSSL tookit and its
 related documentation.
-
-OpenSSL is based on the excellent SSLeay library developed by Eric A.
-Young and Tim J. Hudson. The OpenSSL toolkit is licensed under an
-Apache-style licence, which basically means that you are free to get
-and use it for commercial and non-commercial purposes subject to some
-simple license conditions.
-
-This package contains shared libraries only, install openssl-tools if
-you want to use openssl cmdline tool.
 
 %package tools
 Summary:	OpenSSL command line tool and utilities
@@ -65,67 +56,53 @@ Development part of OpenSSL library.
 %setup -q
 %patch0 -p1
 %patch1 -p1
-%patch2 -p1
-
-%{__perl} -pi -e 's#%{_prefix}/local/bin/perl#%{__perl}#g' \
-	`grep -l -r "%{_prefix}/local/bin/perl" *`
-
-sed -i -e's|\$prefix/\$libdir/engines|%{_libdir}/engines|g' Configure
 
 %build
 touch Makefile.*
 %{__perl} util/perlpath.pl %{__perl}
 
 ./Configure \
-	--openssldir=%{_sysconfdir}/%{name}	\
-	--libdir=%{_lib}			\
-	enable-md2 shared zlib threads		\
+	--openssldir=/etc//ssl	    \
+	--libdir=%{_lib}	    \
+	shared zlib		    \
 %ifarch %{ix86}
-	linux-elf				\
+	linux-elf		    \
 %endif
 %ifarch %{x8664}
-	linux-x86_64				\
-	enable-ec_nistp_64_gcc_128		\
+	linux-x86_64		    \
+	enable-ec_nistp_64_gcc_128  \
 %endif
-	%{rpmcflags} %{rpmldflags} -DOPENSSL_NO_TLS1_2_CLIENT
+	%{rpmcppflags} %{rpmcflags} %{rpmldflags}
 
-%{__make} -j1 all rehash	\
-	CC="%{__cc}"		\
-	INSTALLTOP=%{_prefix}
+#%{__make} -j1 all rehash	\
+#	CC="%{__cc}"		\
+#	INSTALLTOP=%{_prefix}
+%{__make} depend
+%{__make} -j1
 
-# Rename POD sources of man pages. "openssl_" prefix is added to each
-# manpage to avoid potential conflicts with other packages.
-
-for dir in doc/{apps,ssl,crypto}; do
-	cd $dir || exit 1;
-	%{__perl} -pi -e 's/(\W)((?<!openssl_)\w+)(\(\d\))/$1openssl_$2$3/g; s/openssl_openssl/openssl/g;' *.pod;
-
-	for pod in !(openssl*).pod; do
-		mv -f $pod openssl_$pod;
-	done
-	cd ../..
-done
+%check
+%{__make} -j1 test
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT{%{_sysconfdir}/%{name},%{_libdir}/%{name}} \
+install -d $RPM_BUILD_ROOT{/etc/ssl,%{_libdir}/%{name}} \
 	$RPM_BUILD_ROOT{%{_mandir}/{pl/man1,man{1,3,5,7}},%{_datadir}/ssl} \
 	$RPM_BUILD_ROOT%{_pkgconfigdir}
 
 %{__make} -j1 install \
 	INSTALLTOP=%{_prefix} \
 	INSTALL_PREFIX=$RPM_BUILD_ROOT \
-	MANDIR=%{_mandir}
+	MANDIR=%{_mandir}   \
+	MANSUFFIX=ssl
 
-install lib*.so.*.* $RPM_BUILD_ROOT%{_libdir}
-ln -sf libcrypto.so.*.* $RPM_BUILD_ROOT%{_libdir}/libcrypto.so
-ln -sf libssl.so.*.* $RPM_BUILD_ROOT%{_libdir}/libssl.so
-
-mv -f $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/misc/* $RPM_BUILD_ROOT%{_libdir}/%{name}
-rm -rf $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/misc
+mv -f $RPM_BUILD_ROOT/etc/ssl/misc/* $RPM_BUILD_ROOT%{_libdir}/%{name}
+%{__sed} -i -e "s|./demoCA|/etc/ssl|g" \
+    $RPM_BUILD_ROOT%{_libdir}/%{name}/* $RPM_BUILD_ROOT/etc/ssl/openssl.cnf
+rm -rf $RPM_BUILD_ROOT/etc/ssl/misc
 
 # not installed as individual utilities (see openssl dgst instead)
-%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/{md2,md4,md5,mdc2,ripemd160,sha,sha1}.1
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/{md2,md4,md5,mdc2,ripemd160,sha,sha1}.1ssl
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -141,14 +118,14 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_libdir}/libssl.so.*.*.*
 %dir %{_libdir}/engines
 %attr(755,root,root) %{_libdir}/engines/*.so
-%dir %{_sysconfdir}/%{name}
-%dir %{_sysconfdir}/%{name}/certs
-%dir %{_sysconfdir}/%{name}/private
+%dir /etc/ssl
+%dir /etc/ssl/certs
+%dir /etc/ssl/private
 %dir %{_datadir}/ssl
 
 %files tools
 %defattr(644,root,root,755)
-%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/openssl.cnf
+%config(noreplace) %verify(not md5 mtime size) /etc/ssl/openssl.cnf
 %attr(755,root,root) %{_bindir}/%{name}
 
 %dir %{_libdir}/%{name}
@@ -158,51 +135,57 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_libdir}/%{name}/c_issuer
 %attr(755,root,root) %{_libdir}/%{name}/c_name
 
+%{_mandir}/man1/asn1parse.1*
+%{_mandir}/man1/ca.1*
+%{_mandir}/man1/ciphers.1*
+%{_mandir}/man1/crl.1*
+%{_mandir}/man1/crl2pkcs7.1*
+%{_mandir}/man1/dgst.1*
+%{_mandir}/man1/dhparam.1*
+%{_mandir}/man1/dsa.1*
+%{_mandir}/man1/dsaparam.1*
+%{_mandir}/man1/ec.1*
+%{_mandir}/man1/ecparam.1*
+%{_mandir}/man1/enc.1*
+%{_mandir}/man1/errstr.1*
+%{_mandir}/man1/gendsa.1*
+%{_mandir}/man1/genpkey.1*
+%{_mandir}/man1/genrsa.1*
+%{_mandir}/man1/nseq.1*
+%{_mandir}/man1/ocsp.1*
 %{_mandir}/man1/openssl.1*
-%{_mandir}/man1/openssl_asn1parse.1*
-%{_mandir}/man1/openssl_ca.1*
-%{_mandir}/man1/openssl_ciphers.1*
-%{_mandir}/man1/openssl_crl.1*
-%{_mandir}/man1/openssl_crl2pkcs7.1*
-%{_mandir}/man1/openssl_dgst.1*
-%{_mandir}/man1/openssl_dhparam.1*
-%{_mandir}/man1/openssl_dsa.1*
-%{_mandir}/man1/openssl_dsaparam.1*
-%{_mandir}/man1/openssl_ec.1*
-%{_mandir}/man1/openssl_ecparam.1*
-%{_mandir}/man1/openssl_enc.1*
-%{_mandir}/man1/openssl_errstr.1*
-%{_mandir}/man1/openssl_gendsa.1*
-%{_mandir}/man1/openssl_genrsa.1*
-%{_mandir}/man1/openssl_nseq.1*
-%{_mandir}/man1/openssl_ocsp.1*
-%{_mandir}/man1/openssl_passwd.1*
-%{_mandir}/man1/openssl_pkcs12.1*
-%{_mandir}/man1/openssl_pkcs7.1*
-%{_mandir}/man1/openssl_pkcs8.1*
-%{_mandir}/man1/openssl_rand.1*
-%{_mandir}/man1/openssl_req.1*
-%{_mandir}/man1/openssl_rsa.1*
-%{_mandir}/man1/openssl_rsautl.1*
-%{_mandir}/man1/openssl_s_client.1*
-%{_mandir}/man1/openssl_s_server.1*
-%{_mandir}/man1/openssl_s_time.1*
-%{_mandir}/man1/openssl_sess_id.1*
-%{_mandir}/man1/openssl_smime.1*
-%{_mandir}/man1/openssl_speed.1*
-%{_mandir}/man1/openssl_spkac.1*
-%{_mandir}/man1/openssl_verify.1*
-%{_mandir}/man1/openssl_version.1*
-%{_mandir}/man1/openssl_x509.1*
-%{_mandir}/man5/openssl_config.5*
-%{_mandir}/man5/openssl_x509v3_config.5*
+%{_mandir}/man1/passwd.1*
+%{_mandir}/man1/pkcs12.1*
+%{_mandir}/man1/pkcs7.1*
+%{_mandir}/man1/pkcs8.1*
+%{_mandir}/man1/pkey.1*
+%{_mandir}/man1/pkeyparam.1*
+%{_mandir}/man1/pkeyutl.1*
+%{_mandir}/man1/rand.1*
+%{_mandir}/man1/req.1*
+%{_mandir}/man1/rsa.1*
+%{_mandir}/man1/rsautl.1*
+%{_mandir}/man1/s_client.1*
+%{_mandir}/man1/s_server.1*
+%{_mandir}/man1/s_time.1*
+%{_mandir}/man1/sess_id.1*
+%{_mandir}/man1/smime.1*
+%{_mandir}/man1/speed.1*
+%{_mandir}/man1/spkac.1*
+%{_mandir}/man1/ts.1*
+%{_mandir}/man1/tsget.1*
+%{_mandir}/man1/verify.1*
+%{_mandir}/man1/version.1*
+%{_mandir}/man1/x509.1*
+%{_mandir}/man5/config.5*
+%{_mandir}/man5/x509v3_config.5*
 
 %files tools-perl
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/c_rehash
 %attr(755,root,root) %{_libdir}/%{name}/CA.pl
 %attr(755,root,root) %{_libdir}/%{name}/tsget
-%{_mandir}/man1/openssl_CA.pl.1*
+%{_mandir}/man1/CA.pl.1*
 
 %files devel
 %defattr(644,root,root,755)
@@ -212,6 +195,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_pkgconfigdir}/libcrypto.pc
 %{_pkgconfigdir}/libssl.pc
 %{_pkgconfigdir}/openssl.pc
-%{_mandir}/man3/openssl*.3*
-%{_mandir}/man7/openssl_des_modes.7*
+%{_mandir}/man3/*.3*
+%{_mandir}/man7/des_modes.7*
 
