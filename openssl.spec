@@ -1,9 +1,10 @@
+# based on PLD Linux spec git://git.pld-linux.org/packages/openssl.git
 %include	/usr/lib/rpm/macros.perl
 
 Summary:	OpenSSL Toolkit for Secure Sockets Layer and Transport Layer Security
 Name:		openssl
 Version:	1.0.1i
-Release:	1
+Release:	2
 License:	Apache-like
 Group:		Libraries
 Source0:	ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
