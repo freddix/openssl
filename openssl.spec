@@ -3,12 +3,12 @@
 
 Summary:	OpenSSL Toolkit for Secure Sockets Layer and Transport Layer Security
 Name:		openssl
-Version:	1.0.1i
-Release:	2
+Version:	1.0.1j
+Release:	1
 License:	Apache-like
 Group:		Libraries
 Source0:	ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
-# Source0-md5:	c8dc151a671b9b92ff3e4c118b174972
+# Source0-md5:	f7175c9cd3c39bb1907ac8bba9df8ed3
 Patch0:		%{name}-include.patch
 Patch1:		%{name}-ldflags.patch
 URL:		http://www.openssl.org/
@@ -60,8 +60,6 @@ Development part of OpenSSL library.
 
 %build
 touch Makefile.*
-%{__perl} util/perlpath.pl %{__perl}
-
 ./Configure \
 	--openssldir=/etc//ssl	    \
 	--libdir=%{_lib}	    \
@@ -74,10 +72,6 @@ touch Makefile.*
 	enable-ec_nistp_64_gcc_128  \
 %endif
 	%{rpmcppflags} %{rpmcflags} %{rpmldflags}
-
-#%{__make} -j1 all rehash	\
-#	CC="%{__cc}"		\
-#	INSTALLTOP=%{_prefix}
 %{__make} depend
 %{__make} -j1
 
