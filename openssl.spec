@@ -4,7 +4,7 @@
 Summary:	OpenSSL Toolkit for Secure Sockets Layer and Transport Layer Security
 Name:		openssl
 Version:	1.0.1j
-Release:	1
+Release:	2
 License:	Apache-like
 Group:		Libraries
 Source0:	ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
@@ -15,7 +15,7 @@ URL:		http://www.openssl.org/
 BuildRequires:	perl-devel
 BuildRequires:	rpm-perlprov
 BuildRequires:	sed
-Requires:	ca-certificates
+Suggests:	ca-certificates
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		specflags   -Wa,--noexecstack
