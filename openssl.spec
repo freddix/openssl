@@ -3,12 +3,12 @@
 
 Summary:	OpenSSL Toolkit for Secure Sockets Layer and Transport Layer Security
 Name:		openssl
-Version:	1.0.2
+Version:	1.0.2a
 Release:	1
 License:	Apache-like
 Group:		Libraries
 Source0:	ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
-# Source0-md5:	38373013fc85c790aabf8837969c5eba
+# Source0-md5:	a06c547dac9044161a477211049f60ef
 Patch0:		%{name}-include.patch
 Patch1:		%{name}-ldflags.patch
 URL:		http://www.openssl.org/
